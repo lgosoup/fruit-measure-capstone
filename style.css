@@ -1,0 +1,421 @@
+:root {
+  --bg: #f7f7f5;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #ea7a1a;
+  --primary-text: #ffffff;
+  --border: #d1d5db;
+  --photo-bg: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+}
+
+/* 첫 화면 */
+.home {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.home-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  border: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.guide {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* 사진 화면 */
+.photo {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--photo-bg);
+}
+
+.photo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #e5e7eb;
+}
+
+.btn-bar {
+  padding: 8px 12px;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  background: transparent;
+  color: #f9fafb;
+  font-size: 0.95rem;
+}
+
+.photo-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.photo-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #f9fafb;
+}
+
+.photo-status {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.photo-status {
+  line-height: 1.6;
+}
+
+.status-fruit {
+  color: #e879f9;
+  font-size: 1.2rem;
+}
+
+.btn-save {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save:disabled {
+  background: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.status-sub {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.photo-canvas {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: block;
+  /* 브라우저 기본 스크롤·확대 대신 직접 처리 */
+  touch-action: none;
+}
+
+/* 기록 화면 */
+.records {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.records-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.records-bar h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.records .btn-bar {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.records-empty {
+  color: var(--muted);
+}
+
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.records-table th,
+.records-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.records-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.records-table td:nth-child(2) {
+  font-weight: 600;
+}
+
+.btn-delete {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-delete-confirm {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+/* AR 화면, 윤곽 인식, 촬영 사진 */
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.guide-warn {
+  color: #b45309;
+}
+
+.btn:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* AR 화면: 카메라 화면 위에 겹쳐 보인다(배경 투명) */
+.ar {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}
+
+.ar-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ar-ui {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.ar-ui button {
+  pointer-events: auto;
+}
+
+.ar-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.ar-top .btn-bar {
+  flex-shrink: 0;
+  white-space: nowrap;
+  background: rgba(17, 24, 39, 0.6);
+}
+
+.ar-guide {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.6);
+  color: #f9fafb;
+  font-size: 0.95rem;
+}
+
+/* AR을 시작하면 크롬이 화면 아래쪽에 기본 안내를 띄우므로, 버튼을 그 위로 올린다 */
+.ar-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 16px calc(env(safe-area-inset-bottom, 0px) + 120px);
+}
+
+/* 크기를 잰 뒤 표면까지 거리. 12cm 안이면 초록 */
+.ar-distance {
+  align-self: center;
+  margin: auto 0 0;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.7);
+  color: #f9fafb;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.ar-distance.ar-distance-inside {
+  background: rgba(22, 163, 74, 0.9);
+}
+
+.btn-capture {
+  min-width: 120px;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.btn-capture:disabled {
+  background: rgba(55, 65, 81, 0.8);
+  color: #9ca3af;
+}
+
+.btn-point {
+  background: #0e7490;
+}
+
+/* 화면 옆 완료 표시 */
+.ar-done {
+  position: absolute;
+  right: 12px;
+  top: 30%;
+  max-width: 45%;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.75);
+  color: #f9fafb;
+  border-left: 4px solid #86efac;
+}
+
+.ar-done p {
+  margin: 0;
+}
+
+.ar-done-title {
+  color: #86efac;
+  font-weight: 700;
+}
+
+.ar-done-size {
+  margin: 4px 0 !important;
+  color: #e879f9;
+  font-size: 1.25rem;
+  font-weight: 700;
+  white-space: pre-line; /* 가로·세로를 두 줄로 */
+}
+
+.ar-done-sub {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin-bottom: 8px !important;
+}
+
+.status-fruit {
+  white-space: nowrap;
+}
+
+/* 기록 표: 폰 화면 폭에 맞게 */
+.records-table th,
+.records-table td {
+  padding: 8px 6px;
+  font-size: 0.9rem;
+}
+
+.records-table td:nth-child(4) {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.photo-actions {
+  flex-direction: column;
+}
+
+.records-table th,
+.btn-delete {
+  white-space: nowrap;
+}
