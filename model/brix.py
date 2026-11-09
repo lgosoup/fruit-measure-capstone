@@ -139,32 +139,38 @@ def linear_model(m, n_features):
     return intercept, coef
 
 
-def fruit_level(fruit, X):
-    """같은 과일의 반복 측정을 평균해 과일 하나 = 한 행으로."""
-    ids = fruit["fruit_id"].astype(str).to_numpy()
-    uniq = list(dict.fromkeys(ids))
-    Xf = np.array([X[ids == u].mean(axis=0) for u in uniq])
-    yf = np.array([fruit["brix"].to_numpy(float)[ids == u].mean() for u in uniq])
-    return np.array(uniq), Xf, yf
-
-
 def train(df, mode, channels_name="nir", k=5):
+    """측정 1번 = 학습 1행. 반복을 평균하지 않는다.
+
+    실제 사용은 한 번만, 12cm 안의 아무 거리에서 잰다. 반복(예: 5·8·11cm)을 평균하면 과일마다 평균 거리가
+    같아져 모델이 거리 영향을 배우지 못한다. 교차검증은 과일 단위로 나눠 같은 과일이 학습·평가에 함께 들어가지 않고,
+    오차는 「한 번 잰 값으로 맞힌 오차」다.
+    """
     channels = channel_list(channels_name)
     fruit = reflectance(df[df["mode"] == mode], channels)
     fruit = fruit[fruit["brix"].notna()]
     X = features(fruit, channels)
-    ids, Xf, yf = fruit_level(fruit, X)
-    if len(ids) < 4:
-        raise ValueError(f"Brix가 있는 과일이 {len(ids)}개뿐입니다(최소 4개)")
+    y = fruit["brix"].to_numpy(float)
+    ids = fruit["fruit_id"].astype(str).to_numpy()
+    n_fruits = len(np.unique(ids))
+    if n_fruits < 4:
+        raise ValueError(f"Brix가 있는 과일이 {n_fruits}개뿐입니다(최소 4개)")
 
-    pred, chosen = nested_cv_predictions(Xf, yf, ids, k)
-    n_comp, curve = choose_components(Xf, yf, ids, k)
-    m = _fit(Xf, yf, n_comp)
-    intercept, coef = linear_model(m, Xf.shape[1])
+    pred, chosen = nested_cv_predictions(X, y, ids, k)
+    n_comp, curve = choose_components(X, y, ids, k)
+    m = _fit(X, y, n_comp)
+    intercept, coef = linear_model(m, X.shape[1])
+    reps = fruit["rep"].to_numpy()
     report = {
-        "fruits": int(len(ids)),
-        "brix_range": [float(yf.min()), float(yf.max())],
-        "cv": scores(yf, pred),
+        "fruits": int(n_fruits),
+        "rows": int(len(y)),
+        "brix_range": [float(y.min()), float(y.max())],
+        "cv": scores(y, pred),
+        "cv_by_rep": {
+            str(r): {**scores(y[reps == r], pred[reps == r]),
+                     "distance_mm": float(np.median(fruit["distance_mm"].to_numpy(float)[reps == r]))}
+            for r in sorted(np.unique(reps))
+        },
         "cv_components": chosen,
         "components": n_comp,
         "rmse_by_components": curve,
@@ -178,7 +184,7 @@ def train(df, mode, channels_name="nir", k=5):
         "coef": coef.tolist(),
         "report": report,
     }
-    return model, pred, ids, yf
+    return model, pred, ids, y
 
 
 def predict(model, df):
@@ -258,11 +264,13 @@ def load(path):
 
 def _print_train(model):
     r = model["report"]
-    print(f"방식 {model['mode']}, 채널 {len(model['channels'])}개, 과일 {r['fruits']}개, "
+    print(f"방식 {model['mode']}, 채널 {len(model['channels'])}개, 과일 {r['fruits']}개(측정 {r['rows']}번), "
           f"Brix {r['brix_range'][0]:.1f}–{r['brix_range'][1]:.1f}")
     cv = r["cv"]
-    print(f"교차검증(과일 단위, 성분 수도 안쪽에서 고름): 오차 RMSE {cv['rmse']:.2f} °Brix, "
+    print(f"교차검증(과일 단위, 성분 수도 안쪽에서 고름), 한 번 잰 값 기준: 오차 RMSE {cv['rmse']:.2f} °Brix, "
           f"치우침 {cv['bias']:+.2f}, R² {cv['r2']:.2f}")
+    for rep, x in r["cv_by_rep"].items():
+        print(f"  반복 {rep}(거리 중앙값 {x['distance_mm']:.0f}mm): RMSE {x['rmse']:.2f}, 치우침 {x['bias']:+.2f}")
     print(f"최종 모델 성분 수 {r['components']} (겹별 선택 {r['cv_components']})")
     if r["fruits"] < 30:
         print("주의: 과일이 30개 미만이라 이 오차는 믿기 어렵습니다. 신호 비교(compare)를 보세요.")

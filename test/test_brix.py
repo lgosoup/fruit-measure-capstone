@@ -82,6 +82,25 @@ for mode in ["noncontact", "contact"]:
 check("비접촉이 접촉의 1.15배 안", res["noncontact"]["rmse"] < 1.15 * res["contact"]["rmse"],
       f"{res['noncontact']['rmse']:.2f} / {res['contact']['rmse']:.2f}")
 
+# 6c. 수집 계획(과일마다 5·8·11cm에서 한 번씩)으로 학습해도, 실제 사용처럼 한 번만 잰 값이
+#     어느 거리에서든 치우치지 않는다. 반복을 평균해 학습하면 과일마다 평균 거리가 같아져 거리 영향을 못 배운다.
+plan, _ = sample_data.make(400, seed=5, distances=sample_data.PLAN_DISTANCES)
+field, _ = sample_data.make(200, seed=6, distances=sample_data.PLAN_DISTANCES)  # 학습에 없던 과일
+single = {}
+for mode in ["noncontact", "contact"]:
+    m, _, _, _ = brix.train(plan, mode, "nir")
+    out = brix.predict(m, field)
+    single[mode] = out.assign(err=out["brix_pred"] - out["brix"])
+nc_single = single["noncontact"]
+# 평가용 과일 묶음 자체의 치우침(모든 거리에 똑같이 생김)은 빼고, 거리에 따라 달라지는지만 본다.
+# 반복 평균 학습에서는 5·8·11cm 치우침이 +0.09 / −0.22 / −0.45로 0.54 벌어졌다.
+bias_d = [nc_single.loc[nc_single["rep"] == rep, "err"].mean() for rep in [1, 2, 3]]
+check("한 번 측정 치우침이 거리에 따라 같음(5·8·11cm)", max(bias_d) - min(bias_d) < 0.1,
+      " / ".join(f"{b:+.2f}" for b in bias_d))
+rmse1 = {k: float(np.sqrt(np.mean(v["err"] ** 2))) for k, v in single.items()}
+check("한 번 측정 오차: 비접촉이 접촉의 1.1배 안", rmse1["noncontact"] < 1.1 * rmse1["contact"],
+      f"{rmse1['noncontact']:.2f} / {rmse1['contact']:.2f}")
+
 # 7. 거리·지름을 빼면 비접촉 오차가 커진다(보정 변수가 실제로 쓰인다)
 orig = brix.EXTRA
 brix.EXTRA = []

@@ -1,10 +1,12 @@
 """정답을 아는 가짜 측정 데이터. 모델 코드와 따로, 빛 → 과일 → 센서 과정을 계산해 센서 켠/끈 값을 만든다.
 
-python -X utf8 model/sample_data.py 출력.csv [--fruits 200] [--seed 0]
+python -X utf8 model/sample_data.py 출력.csv [--fruits 400] [--seed 0]
+  기본은 수집 계획대로 과일 400개 × 비접촉 3번(50·80·110mm, 놓는 오차 ±3mm 정도) + 접촉 3번.
 
 가정(정답):
 - 과일 흡광도 a(파장) = 기본값 + 당 계수·Brix + 크기 계수·지름 + 과일마다 다른 껍질 차이
 - 비접촉: 기준판은 기준 거리(60mm)에서 재고, 과일은 거리 d에서 잼 → 돌아오는 빛 × (60/d)²
+  거리는 반복마다 정해진 거리(distances, 놓는 오차 포함) 또는 50–120mm에서 무작위
   주변광이 센서에 들어옴, 흔들림 큼
 - 접촉: 거리 0(빛이 거리로 줄지 않음), 차광돼 주변광 거의 없음, 흔들림 작음
 """
@@ -15,6 +17,8 @@ import pandas as pd
 
 CHANNELS = [410, 435, 460, 485, 510, 535, 560, 585, 610, 645, 680, 705, 730, 760, 810, 860, 900, 940]
 REF_DISTANCE = 60.0  # 비접촉 기준판 거리(mm)
+PLAN_DISTANCES = (50.0, 80.0, 110.0)  # 수집 계획: 반복 3번을 5·8·11cm에서
+PLACE_SD = 3.0  # 정해진 거리에 폰을 놓을 때의 오차(mm). 기록은 앱이 잰 실제 거리
 
 # 모드별 측정 조건
 MODES = {
@@ -32,8 +36,11 @@ def truth_absorbance(brix, diameter, skin, sugar_scale=1.0):
     return base + sugar * brix + size * diameter + skin
 
 
-def make(n_fruits=200, reps=3, seed=0, modes=("noncontact", "contact"), sugar_scale=1.0, noiseless=False, skin_sd=0.02):
-    """반환: (측정 DataFrame, 정답 DataFrame[fruit_id, mode, rep, r_<파장>=실제 겉보기 반사율])."""
+def make(n_fruits=200, reps=3, seed=0, modes=("noncontact", "contact"), sugar_scale=1.0, noiseless=False, skin_sd=0.02,
+         distances=None):
+    """distances: 반복 r번째를 distances[r] 근처에서 잼(None이면 50–120mm 무작위).
+
+    반환: (측정 DataFrame, 정답 DataFrame[fruit_id, mode, rep, r_<파장>=실제 겉보기 반사율])."""
     rng = np.random.default_rng(seed)
     white = 20000.0 * (0.6 + 0.4 * np.sin(np.linspace(0.3, 2.8, len(CHANNELS))))  # 기준판 신호(광원×센서 응답)
     brix = rng.uniform(9.0, 16.0, n_fruits)
@@ -63,7 +70,10 @@ def make(n_fruits=200, reps=3, seed=0, modes=("noncontact", "contact"), sugar_sc
             ambient = cond["ambient"] * amb_scale * (0.5 + 0.1 * s) * rng.uniform(0.8, 1.2) * np.ones(len(CHANNELS))
             a = truth_absorbance(brix[f], diameter[f], skin[f], sugar_scale)
             for r in range(reps):
-                if cond["distance"]:
+                if cond["distance"] and distances:
+                    d = distances[r % len(distances)] + (0.0 if noiseless else rng.normal(0, PLACE_SD))
+                    geom = (REF_DISTANCE / d) ** 2
+                elif cond["distance"]:
                     d = rng.uniform(*cond["distance"])
                     geom = (REF_DISTANCE / d) ** 2
                 else:
@@ -83,9 +93,9 @@ def make(n_fruits=200, reps=3, seed=0, modes=("noncontact", "contact"), sugar_sc
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("out")
-    p.add_argument("--fruits", type=int, default=200)
+    p.add_argument("--fruits", type=int, default=400)
     p.add_argument("--seed", type=int, default=0)
     a = p.parse_args()
-    df, _ = make(a.fruits, seed=a.seed)
+    df, _ = make(a.fruits, seed=a.seed, distances=PLAN_DISTANCES)
     df.to_csv(a.out, index=False, float_format="%.3f")
     print(f"저장: {a.out} ({len(df)}행)")
